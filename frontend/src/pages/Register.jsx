@@ -1,8 +1,12 @@
 import { useState, useEffect } from "react"
 import { FaUser } from 'react-icons/fa';
-
+import { useNavigate } from "react-router-dom";
+import { userAtom } from "../atoms/authAtoms";
+import { useAtom } from "jotai";
+import { toast } from "react-toastify";
 
 function Register() {
+    const [,setUser] = useAtom(userAtom);
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -12,15 +16,41 @@ function Register() {
 
     const {name, email, password, confirmPassword } = formData;
 
+    const navigate = useNavigate();
+
     const onChange = (e) => {
         setFormData((prevState) => ({
             ...prevState,
-            [e.target.name]: [e.target.value]
+            [e.target.name]: e.target.value
         }))
     }
 
-    const onSubmit = (e) => {
+    const onSubmit = async (e) => {
         e.preventDefault();
+
+        if(password !== confirmPassword) {
+            toast.error('Passwords do not match!');
+        } else {
+            const userData = {
+                name,
+                email,
+                password
+            }
+
+            const response = await fetch('http://localhost:5000/api/users', {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json",
+                  },
+                body: JSON.stringify(userData),
+            })
+            const user = await response.json();
+
+            setUser(user);
+            localStorage.setItem('user', JSON.stringify(user));
+
+            navigate('/')
+        }
     }
 
     return (
